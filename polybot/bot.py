@@ -5,9 +5,7 @@ import time
 from telebot.types import InputFile
 from polybot.img_proc import Img
 
-
 class Bot:
-
     def __init__(self, token, telegram_chat_url):
         # create a new instance of the TeleBot class.
         # all communication with Telegram servers are done using self.telegram_bot_client
@@ -75,4 +73,36 @@ class QuoteBot(Bot):
 
 
 class ImageProcessingBot(Bot):
-    pass
+    def handle_message(self, msg):
+        methodsDict = {'Blur': 'blur',
+                       'Contour': 'contour',
+                       'Segment': 'segment',
+                       'Salt and pepper': 'salt_n_pepper'
+                       }
+        logger.info(f'Incoming message: {msg}')
+        if 'photo' not in msg:
+            self.send_text(msg['chat']['id'], f'please sent a photo with caption of filter')
+            logger.info(f'No photo')
+
+        elif 'caption' not in msg or msg['caption'] not in ['Blur', 'Contour', 'Rotate', 'Segment', 'Salt and pepper', 'Concat'] :
+            self.send_text(msg['chat']['id'], f'Wrong Filter! Please add to photo with caption of right filter name')
+            logger.info(f'caption NOT existing')
+
+        else:
+            logger.info(f'all right!')
+            # self.send_text(msg['chat']['id'], f'Thank you!')
+            file_path = self.download_user_photo(msg)
+            my_img = Img(file_path)
+            # FILTERING
+            filter_name = methodsDict[msg['caption']]
+            if hasattr(Img,filter_name):
+                filter_method = getattr(my_img,filter_name)
+                filter_method()
+                file_path = my_img.save_img()
+                self.send_photo(msg['chat']['id'], file_path)
+
+                time.sleep(0.5)
+                self.send_text(msg['chat']['id'], f'Success!')
+
+
+

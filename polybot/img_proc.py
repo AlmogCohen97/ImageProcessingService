@@ -1,5 +1,6 @@
 from pathlib import Path
 from matplotlib.image import imread, imsave
+import random
 
 
 def rgb2gray(rgb):
@@ -9,7 +10,6 @@ def rgb2gray(rgb):
 
 
 class Img:
-
     def __init__(self, path):
         """
         Do not change the constructor implementation
@@ -24,6 +24,9 @@ class Img:
         new_path = self.path.with_name(self.path.stem + '_filtered' + self.path.suffix)
         imsave(new_path, self.data, cmap='gray')
         return new_path
+
+    def get_dimensions(self):
+        return len(self.data), len(self.data[0])
 
     def blur(self, blur_level=16):
 
@@ -51,17 +54,90 @@ class Img:
             self.data[i] = res
 
     def rotate(self):
-        # TODO remove the `raise` below, and write your implementation
+        # Variables of image's dimensions
+        height = len(self.data)
+        width = len(self.data[0])
+
+        # Create a new empty image with swapped dimensions
+        rotated_img = [[0] * width for _ in range(height)]
+        # Copy pixel value to => rotate_img
+        for row in range(width):
+            for col in range(height):
+                rotated_img[col][width - 1 - row] = self.data[row][col]
+
+        return rotated_img
+
         raise NotImplementedError()
+
 
     def salt_n_pepper(self):
         # TODO remove the `raise` below, and write your implementation
+        # Variables of image's dimensions
+        height = len(self.data)
+        width = len(self.data[0])
+
+        # Randomly pick some pixels in the image
+        num_of_pixels = random.randint(30000, 100000)
+        for i in range(num_of_pixels):
+            # Randomly pickups coordination
+            y_cort = random.randint(0, (height-1))
+            x_cort = random.randint(0, (width - 1))
+            self.data[y_cort][x_cort] = 255   # Color White!
+
+        # Randomly pick some pixels in the image
+        num_of_pixel = random.randint(30000, 100000)
+        for i in range(num_of_pixel):
+            # Randomly pickups coordination
+            y_cort = random.randint(0, height-1)
+            x_cort = random.randint(0, width - 1)
+            self.data[y_cort][x_cort] = 0   # Color Black!
+
+        return self.data
+
         raise NotImplementedError()
 
     def concat(self, other_img, direction='horizontal'):
-        # TODO remove the `raise` below, and write your implementation
+
+        # if Path(other_img.path[0]).exists() == False:
+        #   print("Your other img path wrong..")
+        #   raise NotImplementedError("Wrong path")
+
+        if direction == 'horizontal':
+            if self.get_dimensions()[0] != other_img.get_dimensions()[0]:
+                raise RuntimeError("Image heights are not compatible for horizontal concatenation.")
+            new_data = [row + other_img.data[i] for i, row in enumerate(self.data)]
+        elif direction == 'vertical':
+            if self.get_dimensions()[1] != other_img.get_dimensions()[1]:
+                raise RuntimeError("Image widths are not compatible for vertical concatenation.")
+            new_data = self.data + other_img.data
+        else:
+            raise ValueError("Invalid direction. Use 'horizontal' or 'vertical'.")
+
+        # Store the concatenated image
+        self.data = new_data
+        return self
+
         raise NotImplementedError()
 
     def segment(self):
         # TODO remove the `raise` below, and write your implementation
-        raise NotImplementedError()
+        image = self.data
+
+        for x in range(len(image)):
+            for y in range(len(image[x])):
+                #
+                if image[x][y] > 100:
+                    image[x][y] = 255
+                else:
+                    image[x][y] = 0
+
+        return image
+
+
+
+
+my_img = Img('/home/almog/PycharmProjects/ImageProcessingService/polybot/test/beatles.jpeg')
+# another_img = Img('/home/almog/PycharmProjects/ImageProcessingService/polybot/test/beatles2.jpeg')
+my_img.rotate()
+my_img.save_img()
+# concatenated image was saved in 'path/to/image_filtered.jpg'
